@@ -1,3 +1,5 @@
+This is a branch for RMF development
+
 # The GENIE Event Generator
 
 The GENIE Generator product is an advanced physics simulation used by nearly all modern neutrino experiments and 
