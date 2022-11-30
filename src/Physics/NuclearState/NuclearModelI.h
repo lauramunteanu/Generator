@@ -51,6 +51,8 @@ public:
   virtual bool           GenerateNucleon (const Target &) const = 0;
   virtual bool           GenerateNucleon (const Target & tgt,
                                           double hitNucleonRadius) const;
+  virtual bool           GenerateNucleon (const Target & tgt,
+                                          double q, double w) const;
 
   virtual double         Prob            (double p, double w, const Target &) const = 0;
   virtual double         Prob            (double p, double w, const Target & tgt,

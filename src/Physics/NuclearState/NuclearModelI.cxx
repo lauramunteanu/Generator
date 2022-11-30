@@ -43,6 +43,12 @@ bool NuclearModelI::GenerateNucleon(const Target & tgt,
     return GenerateNucleon(tgt);
   }
 
+bool NuclearModelI::GenerateNucleon(const Target & tgt,
+                                    double /*q*/, double /*w*/) const
+  {
+    return GenerateNucleon(tgt);
+  }
+
 double NuclearModelI::Prob(double p, double w, const Target & tgt,
                            double /*hitNucleonRadius*/) const
   {
