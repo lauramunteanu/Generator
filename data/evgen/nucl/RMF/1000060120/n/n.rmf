@@ -1,0 +1,5 @@
+#First line number of protons or neutrons, number of RMF shells. Then, E_m, n, l, 2*j, occupancy of each shell from highest to lowest energy
+6 2
+44.374517560683 1 0 1 2
+17.807959225764 1 1 3 4
+
