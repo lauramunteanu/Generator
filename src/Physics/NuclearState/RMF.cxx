@@ -62,7 +62,6 @@ bool RMF::GenerateNucleon(const Target & target) const
 
   //choose a removal energy
   RandomGen * rnd = RandomGen::Instance();
-  double nProt = nucleus->fNprot;
 
   // is this a neutron or a proton?
   bool isNeut = pdg::IsNeutron(target.HitNucPdg());
@@ -73,7 +72,7 @@ bool RMF::GenerateNucleon(const Target & target) const
   int shellindex = 0;
 
   if (isProt){
-    int rand_whichshell = rnd->RndGen().Integer(nProt);
+    int rand_whichshell = rnd->RndGen().Integer(nucleus->fNprot);
     int this_shell_occ = 0;
 
     while (shellindex <= rand_whichshell ){
@@ -87,7 +86,7 @@ bool RMF::GenerateNucleon(const Target & target) const
     fCurrRemovalEnergy = nucleus->Ermv_prot[shellindex];
   }
   else if (isNeut){
-    int rand_whichshell = rnd->RndGen().Integer(nNeut);
+    int rand_whichshell = rnd->RndGen().Integer(nucleus->fNneut);
     int this_shell_occ = 0;
 
     while (shellindex <= rand_whichshell ){
@@ -171,13 +170,17 @@ void RMF::LoadConfig(void)
   string data_dir =
       string(gSystem->Getenv("GENIE")) + string("/data/evgen/nucl/RMF/");
   vector<int> PDGlist;
-  map<int, RMFNucleus*> fNuclearMap;
 
   string pdglist_file = data_dir + "ListOfNuclei.dat";
+  std::ifstream pdglist_stream( pdglist_file.c_str() );
 
   int thispdg;
-  while (std::getline(pdglist_file, thispdg))
+  while(!pdglist_file.eof())
   {
+    // **** TODO: FILE IS NOT COMMITTED *****
+    //pdglist_stream >> thispdg;
+
+
     LOG("RMF nuclear model", pDEBUG) << "Adding nucleus " << thispdg << " to list of PDGs";
     PDGlist.push_back(thispdg);
     RMFNucleus* thisnucleus = new RMFNucleus(thispdg);
@@ -202,7 +205,7 @@ RMFNucleus::~RMFNucleus()
 
 }
 //____________________________________________________________________________
-RMFNucleus::FillNucleusInfo()
+void RMFNucleus::FillNucleusInfo()
 {
   string data_dir =
       string(gSystem->Getenv("GENIE")) + string("/data/evgen/nucl/RMF/") + std::to_string(fPDG) + "/";
@@ -222,8 +225,25 @@ RMFNucleus::FillNucleusInfo()
   std::getline(in_file_ermv_prot, dummy);
   
   in_file_ermv_neut >> fNneut >> fNneut_shells;
-
   in_file_ermv_prot >> fNprot >> fNprot_shells;
+
+  const int fNneut_shells_const = fNneut_shells;
+  const int fNprot_shells_const = fNprot_shells;
+
+  neut_shell_occ = new int[fNneut_shells_const];
+  prot_shell_occ = new int[fNprot_shells_const];
+  Ermv_neut = new double[fNneut_shells_const];
+  Ermv_prot = new double[fNprot_shells_const];
+  neut_shell_n = new int[fNneut_shells_const];
+  neut_shell_l = new int[fNneut_shells_const];
+  neut_shell_2j = new int[fNneut_shells_const];
+  prot_shell_n = new int[fNprot_shells_const]
+  prot_shell_l = new int[fNprot_shells_const]
+  prot_shell_2j = new int[fNprot_shells_const];
+  pnucl_neut_prob = new vector<double>[fNneut_shells_const];
+  pnucl_prot_prob = new vector<double>[fNprot_shells_const];
+  hist_prob_neut = new TH1D*[fNneut_shells_const];
+  hist_prob_prot = new TH1D*[fNprot_shells_const];
 
   for (int i_neut_shell=0; i_neut_shell < fNneut_shells; i_neut_shell++ ){
     in_file_ermv_neut >> Ermv_neut[i_neut_shell] >> neut_shell_n[i_neut_shell] >> neut_shell_l[i_neut_shell] >> neut_shell_2j[i_neut_shell] >> neut_shell_occ[i_neut_shell];
