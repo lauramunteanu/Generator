@@ -51,6 +51,13 @@ RMF::~RMF()
   fProbDistroMap.clear();
 }
 //____________________________________________________________________________
+double RMF::Prob(double p, double w, const Target & target) const
+{
+
+  std::cout << "I am a function that works!" << std::endl;
+  return 0;
+}
+//____________________________________________________________________________
 bool RMF::GenerateNucleon(const Target & target) const
 {
   assert(target.HitNucIsSet());
@@ -58,14 +65,16 @@ bool RMF::GenerateNucleon(const Target & target) const
   fCurrRemovalEnergy = 0;
   fCurrMomentum.SetXYZ(0,0,0);
 
-  RMFNucleus* nucleus = fNuclearMap[target.Pdg()];
+  int thispdg = target.HitNucPdg();
+
+  RMFNucleus* nucleus = new RMFNucleus(thispdg);
 
   //choose a removal energy
   RandomGen * rnd = RandomGen::Instance();
 
   // is this a neutron or a proton?
-  bool isNeut = pdg::IsNeutron(target.HitNucPdg());
-  bool isProt = pdg::IsProton(target.HitNucPdg());
+  bool isNeut = pdg::IsNeutron(thispdg);
+  bool isProt = pdg::IsProton(thispdg);
 
   assert(isProt||isNeut);
 
@@ -175,7 +184,7 @@ void RMF::LoadConfig(void)
   std::ifstream pdglist_stream( pdglist_file.c_str() );
 
   int thispdg;
-  while(!pdglist_file.eof())
+  while(!pdglist_stream.eof())
   {
     // **** TODO: FILE IS NOT COMMITTED *****
     //pdglist_stream >> thispdg;
@@ -207,14 +216,14 @@ RMFNucleus::~RMFNucleus()
 //____________________________________________________________________________
 void RMFNucleus::FillNucleusInfo()
 {
-  string data_dir =
+  data_dir =
       string(gSystem->Getenv("GENIE")) + string("/data/evgen/nucl/RMF/") + std::to_string(fPDG) + "/";
 
   neut_dir = data_dir + "n";
   prot_dir = data_dir + "p";
 
   neut_ermv_file = neut_dir + "/n.rmf";
-  prot_ermv_file = prot_dir + "/p.rmf"
+  prot_ermv_file = prot_dir + "/p.rmf";
 
   std::ifstream in_file_ermv_neut( neut_ermv_file.c_str() );
   std::ifstream in_file_ermv_prot( prot_ermv_file.c_str() );
@@ -237,13 +246,14 @@ void RMFNucleus::FillNucleusInfo()
   neut_shell_n = new int[fNneut_shells_const];
   neut_shell_l = new int[fNneut_shells_const];
   neut_shell_2j = new int[fNneut_shells_const];
-  prot_shell_n = new int[fNprot_shells_const]
-  prot_shell_l = new int[fNprot_shells_const]
+  prot_shell_n = new int[fNprot_shells_const];
+  prot_shell_l = new int[fNprot_shells_const];
   prot_shell_2j = new int[fNprot_shells_const];
-  pnucl_neut_prob = new vector<double>[fNneut_shells_const];
-  pnucl_prot_prob = new vector<double>[fNprot_shells_const];
+  //pnucl_prot_prob = new vector<double>[fNprot_shells_const];
   hist_prob_neut = new TH1D*[fNneut_shells_const];
   hist_prob_prot = new TH1D*[fNprot_shells_const];
+
+  //make this loop go the other way - start at fNneut_shells and go down to 0
 
   for (int i_neut_shell=0; i_neut_shell < fNneut_shells; i_neut_shell++ ){
     in_file_ermv_neut >> Ermv_neut[i_neut_shell] >> neut_shell_n[i_neut_shell] >> neut_shell_l[i_neut_shell] >> neut_shell_2j[i_neut_shell] >> neut_shell_occ[i_neut_shell];
@@ -255,40 +265,41 @@ void RMFNucleus::FillNucleusInfo()
   
   fA = fNneut + fNprot; 
   
-  neut_pnucl_file = neut_dir + "/RMF_n.rmf";
-  prot_pnucl_file = prot_dir + "/RMF_p.rmf"
+  neut_pnucl_file = neut_dir + "/RMF_n.mom";
+  prot_pnucl_file = prot_dir + "/RMF_p.mom";
 
   std::ifstream in_file_pnucl_neut( neut_pnucl_file.c_str() );
   std::ifstream in_file_pnucl_prot( prot_pnucl_file.c_str() );
 
+  n_mom_bins_neut = 0;
+  n_mom_bins_prot = 0;
+
   double pnucl_neut_holder;
   double pnucl_neut_prob_holder;
-  double pnucl_neut_array_holder[fNneut_shells];
   
   while(!in_file_pnucl_neut.eof())
   {
     in_file_pnucl_neut >> pnucl_neut_holder;
     pnucl_neut.push_back(pnucl_neut_holder);
+    n_mom_bins_neut++;
     for(int i_neut_shell=0; i_neut_shell < fNneut_shells; i_neut_shell++ ){
       in_file_pnucl_neut >> pnucl_neut_prob_holder;
-      pnucl_neut_array_holder[i_neut_shell] = pnucl_neut_prob_holder;
+      pnucl_neut_prob[i_neut_shell].push_back(pnucl_neut_prob_holder);
     }
-    pnucl_neut_prob.push_back(pnucl_neut_array_holder);
   }
 
   double pnucl_prot_holder;
   double pnucl_prot_prob_holder;
-  double pnucl_prot_array_holder[fNneut_shells];
   
   while(!in_file_pnucl_prot.eof())
   {
     in_file_pnucl_prot >> pnucl_prot_holder;
     pnucl_prot.push_back(pnucl_prot_holder);
+    n_mom_bins_prot++;
     for(int i_prot_shell=0; i_prot_shell < fNprot_shells; i_prot_shell++ ){
       in_file_pnucl_prot >> pnucl_prot_prob_holder;
-      pnucl_prot_array_holder[i_prot_shell] = pnucl_prot_prob_holder;
+      pnucl_prot_prob[i_prot_shell].push_back(pnucl_prot_prob_holder);
     }
-    pnucl_prot_prob.push_back(pnucl_neut_array_holder);
   }
 
   //debug file, delete me please
@@ -296,7 +307,7 @@ void RMFNucleus::FillNucleusInfo()
 
   for (int i_neut_shell=0; i_neut_shell < fNneut_shells; i_neut_shell++ ){
     hist_prob_neut[i_neut_shell] = new TH1D(Form("hist_prob_neut_%i", i_neut_shell), Form("hist_prob_neut_%i", i_neut_shell), fNneut_shells, &pnucl_neut[0]);
-    for (i_pnucl_bin = 0; i_pnucl_bin < hist_prob_neut[i_neut_shell]->GetNbins(); i_pnucl_bin++){
+    for (int i_pnucl_bin = 0; i_pnucl_bin < hist_prob_neut[i_neut_shell]->GetNbinsX(); i_pnucl_bin++){
       hist_prob_neut[i_neut_shell]->SetBinContent(i_pnucl_bin+1, pnucl_neut_prob[i_neut_shell][i_pnucl_bin]);
     }
     hist_prob_neut[i_neut_shell]->Scale(1./hist_prob_neut[i_neut_shell]->Integral());
@@ -306,12 +317,12 @@ void RMFNucleus::FillNucleusInfo()
   
   for (int i_prot_shell=0; i_prot_shell < fNprot_shells; i_prot_shell++ ){
     hist_prob_prot[i_prot_shell] = new TH1D(Form("hist_prob_prot_%i", i_prot_shell), Form("hist_prob_prot_%i", i_prot_shell), fNprot_shells, &pnucl_prot[0]);
-    for (i_pnucl_bin = 0; i_pnucl_bin < hist_prob_prot[i_prot_shell]->GetNbins(); i_pnucl_bin++){
+    for (int i_pnucl_bin = 0; i_pnucl_bin < hist_prob_prot[i_prot_shell]->GetNbinsX(); i_pnucl_bin++){
       hist_prob_prot[i_prot_shell]->SetBinContent(i_pnucl_bin+1, pnucl_prot_prob[i_prot_shell][i_pnucl_bin]);
     }
     hist_prob_prot[i_prot_shell]->Scale(1./hist_prob_prot[i_prot_shell]->Integral());
     fdebug->cd();
-    hist_prob_prot[i_prot_shell]->Write(hist_prob_prot[i_neut_shell]->GetName()); 
+    hist_prob_prot[i_prot_shell]->Write(hist_prob_prot[i_prot_shell]->GetName()); 
   }
 
   fdebug->Close();

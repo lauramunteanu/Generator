@@ -99,18 +99,6 @@ bool LocalFGM::GenerateNucleon(const Target & target,
   else q_val_offset = nuclear::BindEnergyPerNucleon(target);
   fCurrRemovalEnergy = localEb - T_nucl + q_val_offset;
 
- /* std::cout << "In local FGM : " << std::endl;
-
-  std::cout << "localEb " << localEb << std::endl;
-  std::cout << "T_nucl " << T_nucl << std::endl;
-  std::cout << "q_val_offset " << q_val_offset << std::endl;
-  std::cout << "fCurrRemovalEnergy " << fCurrRemovalEnergy << std::endl;
-
-  std::cout << "KF " << KF << std::endl;
-  std::cout << "nucleon mass " << nucl_mass << std::endl;*/
-  //if(it != fNucRmvE.end()) fCurrRemovalEnergy = it->second;
-  //else fCurrRemovalEnergy = nuclear::BindEnergyPerNucleon(target);
-
   return true;
 }
 //____________________________________________________________________________

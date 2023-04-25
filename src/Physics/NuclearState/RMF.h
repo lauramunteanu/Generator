@@ -31,7 +31,7 @@ class RMFNucleus {
   public:
 
   RMFNucleus(int pdg);
-  virtual ~RMFNucleus();
+  ~RMFNucleus();
 
   int fPDG; // nucleus PDG
   int fNneut;//number of neutrons
@@ -44,8 +44,8 @@ class RMFNucleus {
   std::string prot_dir;
   std::string data_dir;
 
-  std::string neut_file;
-  std::string prot_file;
+  std::string neut_ermv_file;
+  std::string prot_ermv_file;
 
   int* neut_shell_occ;// array of shell occupancies for neutrons
   int* prot_shell_occ;// array of shell occupancies for protons
@@ -60,11 +60,17 @@ class RMFNucleus {
   int* prot_shell_l;
   int* prot_shell_2j;
 
-  vector<double>* pnucl_neut_prob;
-  vector<double>* pnucl_prot_prob;
+  int n_mom_bins_neut;
+  int n_mom_bins_prot;
 
-  vector<double> pnucl_neut;
-  vector<double> pnucl_prot;
+  std::string neut_pnucl_file;
+  std::string prot_pnucl_file;
+
+  std::vector<double> pnucl_neut;
+  std::vector<double> pnucl_prot;
+
+  std::vector< std::vector<double> > pnucl_neut_prob;
+  std::vector< std::vector<double> > pnucl_prot_prob;
 
   TH1D** hist_prob_neut;
   TH1D** hist_prob_prot;
@@ -90,7 +96,9 @@ public:
   bool           GenerateNucleon (const Target & tgt) const;
   //bool           GenerateNucleon (const Target & tgt,
   //                                        double q, double w) const;
-  //double         Prob            (double mom, double E, const Target & t) const;
+  double         Prob            (double p, double w, const Target & t) const;
+
+
   NuclearModel_t ModelType       (const Target &) const 
   { 
     return kNucmRMF; 
